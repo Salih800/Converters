@@ -3,33 +3,52 @@ import cv2
 import glob
 from natsort import natsorted
 import imutils
+import argparse
 
-folder_path = "/path/to/images/folder/"
-folder_name = "folder_name"
 
-file_formats = ["jpg", "jpeg", "png"]
+def main(args):
+    folder_path = args.folder_path
+    video_save_name = args.save_name if args.save_name else os.path.basename(folder_path) + ".mp4"
 
-pics_list = []
-for file_format in file_formats:
-    format_list = glob.glob(os.path.join(folder_path + folder_name + "/*." + file_format))
-    pics_list.append(format_list)
+    file_formats = ["jpg", "jpeg", "png"]
 
-pics_list = natsorted(pics_list)
+    pics_list = []
+    for file_format in file_formats:
+        format_list = glob.glob(os.path.join(folder_path + "/*." + file_format))
+        if len(format_list) > 0:
+            pics_list += format_list
 
-set_fps = 15
-fourcc = "mp4v"
+    pics_list = natsorted(pics_list)
 
-video_file_path = folder_name + "_merged.mp4"
-record_width, record_height = (1280, 720)
+    set_fps = args.fps
+    fourcc = args.codec
 
-out = cv2.VideoWriter(video_file_path, cv2.VideoWriter_fourcc(*fourcc),
-                      set_fps, (record_width, record_height))
+    record_width, record_height = (args.width, args.height)
 
-print(f"Total {len(pics_list)} picture found")
-for i, pic in enumerate(pics_list):
-    print(f"{i+1}/{len(pics_list)}", pic)
-    img = cv2.imread(pic)
-    img = imutils.resize(img, width=record_width, height=record_height)
-    out.write(img)
+    out = cv2.VideoWriter(video_save_name, cv2.VideoWriter_fourcc(*fourcc),
+                          set_fps, (record_width, record_height))
 
-out.release()
+    print(f"Total {len(pics_list)} picture found")
+    for i, pic in enumerate(pics_list):
+        print(f"{i + 1}/{len(pics_list)}", pic)
+        img = cv2.imread(pic)
+        img = imutils.resize(img, width=record_width, height=record_height)
+        out.write(img)
+
+    out.release()
+
+
+# construct the argument parser and parse the arguments
+def arg_parse():
+    parser = argparse.ArgumentParser(description="Merge images to video")
+    parser.add_argument("--folder_path", type=str, default="", help="Path to folder")
+    parser.add_argument("--fps", type=int, default=10, help="FPS")
+    parser.add_argument("--codec", type=str, default="mp4v", help="Codec")
+    parser.add_argument("--width", type=int, default=1280, help="Width")
+    parser.add_argument("--height", type=int, default=720, help="Height")
+    parser.add_argument("--save_name", type=str, default="", help="Save name")
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    main(arg_parse())

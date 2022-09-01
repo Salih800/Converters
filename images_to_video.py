@@ -2,7 +2,6 @@ import os
 import cv2
 import glob
 from natsort import natsorted
-import imutils
 import argparse
 
 
@@ -10,13 +9,16 @@ def main(args):
     folder_path = args.folder_path
     video_save_name = args.save_name if args.save_name else os.path.basename(folder_path) + ".mp4"
 
-    file_formats = ["jpg", "jpeg", "png"]
+    if "*" not in folder_path:
+        file_formats = ["jpg", "jpeg", "png"]
 
-    pics_list = []
-    for file_format in file_formats:
-        format_list = glob.glob(os.path.join(folder_path + "/*." + file_format))
-        if len(format_list) > 0:
-            pics_list += format_list
+        pics_list = []
+        for file_format in file_formats:
+            format_list = glob.glob(os.path.join(folder_path + "/*." + file_format))
+            if len(format_list) > 0:
+                pics_list += format_list
+    else:
+        pics_list = glob.glob(folder_path)
 
     pics_list = natsorted(pics_list)
 
@@ -32,7 +34,7 @@ def main(args):
     for i, pic in enumerate(pics_list):
         print(f"{i + 1}/{len(pics_list)}", pic)
         img = cv2.imread(pic)
-        img = imutils.resize(img, width=record_width, height=record_height)
+        img = cv2.resize(img, (record_width, record_height))
         out.write(img)
 
     out.release()
